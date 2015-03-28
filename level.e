@@ -53,6 +53,7 @@ feature -- Routines
 	update
 		do
 			delta_x := ((player.x_int + (player.width // 2)) - left_x) - controller.screen_surface.width // 2
+			player.surrounding_tiles := scan_surrounding_tiles (player.center_x, player.center_y)
 		end
 
 	display
@@ -70,13 +71,11 @@ feature -- Routines
 
 	display_player
 		local
-			l_surrounding_tiles: ARRAYED_LIST [TILE]
 			image: GAME_SURFACE_IMG_FILE
 		do
 			create image.make_with_alpha ("Images/Tiles/Hard_tiles/square.png")
-			l_surrounding_tiles := scan_surrounding_tiles (player.center_x, player.center_y)
 			across
-				l_surrounding_tiles as la_surrounding_tiles
+				player.surrounding_tiles as la_surrounding_tiles
 			loop
 				controller.screen_surface.draw_surface (image, la_surrounding_tiles.item.position_x - delta_x, la_surrounding_tiles.item.position_y)
 			end

@@ -100,6 +100,8 @@ feature -- Access
 			Result.queue_sound_infinite_loop (l_sound)
 		end
 
+	surrounding_tiles: ARRAYED_LIST[TILE] assign assign_surrounding_tiles
+
 feature -- Routines
 
 	update
@@ -135,9 +137,14 @@ feature -- Routines
 			end
 		end
 
+feature --Assigner
 	assign_position_x (a_position_x: CELL [REAL])
 		do
 			position_x := a_position_x
 		end
 
+	assign_surrounding_tiles (a_surrounding_tiles: ARRAYED_LIST[TILE])
+		do
+			surrounding_tiles:= a_surrounding_tiles
+		end
 end
