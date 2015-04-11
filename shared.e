@@ -7,10 +7,6 @@ note
 class
 	SHARED
 
-feature {PLAYER}
-
-	level: LEVEL
-
 feature
 
 	controller: GAME_LIB_CONTROLLER
@@ -31,7 +27,17 @@ feature
 			Result.enable_sound
 		end
 
+	level_factory: LEVEL_FACTORY
+		once
+			create Result.make
+		end
+
 	image_factory: IMAGE_FACTORY
+		once
+			create Result.make
+		end
+
+	tile_factory: TILE_FACTORY
 		once
 			create Result.make
 		end

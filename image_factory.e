@@ -22,7 +22,7 @@ feature {NONE}
 			create Result.put(0)
 		end
 
-feature
+feature -- Routines
 
 	space: GAME_SURFACE
 		once

@@ -24,10 +24,6 @@ feature -- Access
 
 	player: PLAYER assign assign_player
 
-	position_x: INTEGER
-
-	position_y: INTEGER
-
 	start_x: INTEGER assign assign_start_x
 
 	start_y: INTEGER assign assign_start_y
@@ -38,11 +34,14 @@ feature -- Access
 
 	delta_x: INTEGER
 
-	left_x: INTEGER
+	delta_y: INTEGER
 
 	height: INTEGER
+		do
+			Result:= count
+		end
 
-	width: INTEGER
+	width: INTEGER assign assign_width
 
 	tile_width: INTEGER assign assign_tile_width
 
@@ -52,20 +51,22 @@ feature -- Routines
 
 	update
 		do
-			delta_x := ((player.x_int + (player.width // 2)) - left_x) - controller.screen_surface.width // 2
-			player.surrounding_tiles := scan_surrounding_tiles (player.center_x, player.center_y)
+			delta_x := (player.position_x + (player.image.width // 2)) - controller.screen_surface.width // 2
+			delta_y := (player.position_y + (player.image.height // 2)) - controller.screen_surface.height // 2
+
+			player.surrounding_tiles := scan_surrounding_tiles (player.center_x, player.center_y, 3, 3)
 		end
 
 	display
+		local
+			l_tiles_to_display: LIST[TILE]
 		do
+			l_tiles_to_display:= scan_surrounding_tiles (player.center_x, player.center_y, (controller.screen_surface.width // tile_width + 2), controller.screen_surface.height // tile_height + 2)
+
 			across
-				current as la_current
+				l_tiles_to_display as la_tiles_to_display
 			loop
-				across
-					la_current.item as la_sub_current
-				loop
-					controller.screen_surface.draw_surface (la_sub_current.item.image, la_sub_current.item.position_x - delta_x, la_sub_current.item.position_y)
-				end
+				controller.screen_surface.draw_surface (la_tiles_to_display.item.image, la_tiles_to_display.item.position_x - delta_x, la_tiles_to_display.item.position_y - delta_y)
 			end
 		end
 
@@ -77,34 +78,36 @@ feature -- Routines
 			across
 				player.surrounding_tiles as la_surrounding_tiles
 			loop
-				controller.screen_surface.draw_surface (image, la_surrounding_tiles.item.position_x - delta_x, la_surrounding_tiles.item.position_y)
+				controller.screen_surface.draw_surface (image, la_surrounding_tiles.item.position_x - delta_x , la_surrounding_tiles.item.position_y - delta_y)
 			end
-			controller.screen_surface.draw_surface (player.image, player.x_int - delta_x, player.position_y)
+			controller.screen_surface.draw_surface (player.image, player.position_x - delta_x, player.position_y - delta_y)
 		end
 
-	scan_surrounding_tiles (a_x, a_y: INTEGER): ARRAYED_LIST [TILE]
+	scan_surrounding_tiles (a_x, a_y, a_number_per_row, a_number_per_column: INTEGER): ARRAYED_LIST [TILE]
 		local
-			l_column: INTEGER
 			l_row: INTEGER
+			l_column: INTEGER
 			l_i: INTEGER
 			l_j: INTEGER
 		do
-			create Result.make (4)
-			l_column := (a_x // tile_width) + 1
-			l_row := (a_y // tile_height) + 1
+			create Result.make (0)
+			l_row := (a_x // tile_width) + 1
+			l_column := (a_y // tile_height) + 1
 			from
-				l_j := l_row - 1
+				l_j := l_column - (a_number_per_column // 2)
 			until
-				l_j > l_row + 1
+				l_j > l_column + (a_number_per_column //2)
 			loop
 
 				from
-					l_i := l_column - 1
+					l_i := l_row - (a_number_per_row // 2)
 				until
-					l_i > l_column + 1
+					l_i > l_row + (a_number_per_row // 2)
 				loop
-					if l_i > 0 and l_i <= at (1).count and l_j > 0 and l_j <= count then
-						Result.extend (at (l_j).at (l_i))
+					if l_j > 0 and l_j <= count then
+						if l_i > 0  and l_i <= at(l_j).count then
+							Result.extend (at (l_j).at (l_i))
+						end
 					end
 					l_i := l_i + 1
 				end
@@ -137,6 +140,11 @@ feature -- Assigner
 	assign_start_y (a_start_y: INTEGER)
 		do
 			start_y := a_start_y
+		end
+
+	assign_width(a_width: INTEGER)
+		do
+			width:= a_width
 		end
 
 end

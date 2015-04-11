@@ -9,8 +9,6 @@ class
 
 inherit
 
-	COLLISION
-
 	SHARED
 
 create
@@ -24,7 +22,9 @@ feature {NONE} -- Initialization
 			initialize_background
 			initialize_level
 			initialize_player
-			background.delta_position_x := player.position_x
+			background.delta_position_x := player.cell_position_x
+			background.delta_position_y := player.cell_position_y
+			player.level := level
 			level.player := player
 		end
 
@@ -45,7 +45,7 @@ feature -- Initialization
 			model: TILE
 		do
 			create image.make_with_alpha ("Images/background.png")
-			create model.make_tile (image, 0, 0)
+			create model.make_tile (image,0 ,0)
 			create background.make
 			from
 				i := surface.start_x - (2 * model.image.width)
@@ -66,34 +66,31 @@ feature -- Initialization
 
 	initialize_level
 		do
-			create parser
-			level := parser.parse_level (1)
+			level:= level_factory.build_level (1)
 		end
 
 	initialize_player
 		local
-			position: CELL [REAL]
+			l_cell_position_x: CELL [REAL]
+			l_cell_position_y: CELL [REAL]
 		do
-			create position.put (level.start_x)
+			create l_cell_position_x.put (level.start_x)
+			create l_cell_position_y.put (level.start_y)
 			create player_to_draw.make (2)
-			player := create {PLAYER}.make (position, level.start_y)
+			player := create {PLAYER}.make (l_cell_position_x, l_cell_position_y)
 		end
 
 feature -- Access
 
-	parser: FILE_PARSER
-
 	surface: GAME_SURFACE
+
+	level:LEVEL
 
 	background: BACKGROUND
 
 	player_to_draw: ARRAYED_LIST [PLAYER]
 
 	player: PLAYER
-
-	go_left: BOOLEAN
-
-	go_right: BOOLEAN
 
 	source: AUDIO_SOURCE
 
@@ -109,18 +106,26 @@ feature -- Routines
 
 	main_loop
 		do
-			if go_left then
+			if player.go_left then
 				player.move_left
 			end
-			if go_right then
+
+			if player.go_right then
 				player.move_right
 			end
-			if not go_left and not go_right then
+
+			if not player.go_left and not player.go_right then
 				player.slow_down
 			end
+
+			if  player.jumping and player.touching_ground then
+				player.jump
+				player.touching_ground:= false
+			end
+
 			background.update
-			player.update
 			level.update
+			player.update
 
 			background.display (controller)
 			level.display
@@ -131,18 +136,26 @@ feature -- Routines
 	on_key_down (event: GAME_KEYBOARD_EVENT)
 		do
 			if event.is_left_key then
-				go_left := true
+				player.go_left := true
 			elseif event.is_right_key then
-				go_right := true
+				player.go_right := true
+			end
+
+			if event.is_space_key then
+				player.jumping:= true
 			end
 		end
 
 	on_key_up (event: GAME_KEYBOARD_EVENT)
 		do
 			if event.is_left_key then
-				go_left := false
+				player.go_left := false
 			elseif event.is_right_key then
-				go_right := false
+				player.go_right := false
+			end
+
+			if event.is_space_key then
+				player.jumping:= false
 			end
 		end
 
