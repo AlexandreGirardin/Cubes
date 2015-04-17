@@ -118,11 +118,6 @@ feature -- Routines
 				player.slow_down
 			end
 
-			if  player.jumping and player.touching_ground then
-				player.jump
-				player.touching_ground:= false
-			end
-
 			background.update
 			level.update
 			player.update
@@ -142,7 +137,7 @@ feature -- Routines
 			end
 
 			if event.is_space_key then
-				player.jumping:= true
+				player.jump
 			end
 		end
 
@@ -152,10 +147,6 @@ feature -- Routines
 				player.go_left := false
 			elseif event.is_right_key then
 				player.go_right := false
-			end
-
-			if event.is_space_key then
-				player.jumping:= false
 			end
 		end
 

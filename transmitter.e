@@ -9,6 +9,7 @@ class
 
 
 feature
-	allo:INTEGER
+
+	
 
 end
