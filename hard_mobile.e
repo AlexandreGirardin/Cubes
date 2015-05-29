@@ -1,8 +1,7 @@
 note
-	description: "Summary description for {HARD_MOBILE}."
-	author: ""
-	date: "$Date$"
-	revision: "$Revision$"
+	description: "Give objects mobile caracteristics"
+	author: "Alexandre"
+	date: "May 28"
 
 deferred class
 	HARD_MOBILE
@@ -13,12 +12,5 @@ inherit
 feature -- Access
 
 	vector:VECTOR
-
-feature -- Routines
-
-	update
-		do
-
-		end
 
 end

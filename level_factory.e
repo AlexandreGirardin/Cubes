@@ -1,13 +1,13 @@
 note
-	description: "Summary description for {LEVEL_FACTORY}."
-	author: ""
-	date: "$Date$"
-	revision: "$Revision$"
+	description: "Allow to create level"
+	author: "Alexandre Girardin"
+	date: "May 28"
 
 class
 	LEVEL_FACTORY
 
 inherit
+
 	SHARED
 
 create
@@ -16,21 +16,27 @@ create
 feature {NONE}
 
 	make
+		-- Initialize level factory
 		do
 			number_of_instances.put (number_of_instances.item + 1)
 		end
 
 	number_of_instances: CELL [INTEGER]
+		-- Contain number of instance
 		once
 			create Result.put (0)
 		end
 
 feature --Access
-	current_level:LEVEL
+
+	level: LEVEL
+
+	current_level: LEVEL
 
 feature --Routines
 
-	build_level(a_level_number:INTEGER):LEVEL
+	build_level (a_level_number: INTEGER)
+		-- Build the level with a number
 		local
 			i, j: INTEGER
 			level_file: FILE
@@ -40,9 +46,8 @@ feature --Routines
 			tiles_list: ARRAYED_LIST [TILE]
 		do
 			level_file := create {PLAIN_TEXT_FILE}.make_with_name ("Levels/level_" + a_level_number.out + ".txt")
-				-- gestion erreur
 			level_file.open_read
-			create Result.make (0)
+			create level.make_level (0)
 			j := 0
 			from
 			until
@@ -57,22 +62,22 @@ feature --Routines
 						line as la_line
 					loop
 						l_agent_tile := tile_factory.converter [la_line.item]
-						l_tile:= l_agent_tile(i * 64, j * 64)
+						l_tile := l_agent_tile (i * 64, j * 64)
 						tiles_list.extend (l_tile)
 						if la_line.item = '$' then
-							Result.start_x := (i * l_tile.image.width)
-							Result.start_y := (j * l_tile.image.height)
+							level.start_x := (i * l_tile.image.width)
+							level.start_y := (j * l_tile.image.height)
 						end
 						i := i + 1
 					end
-					Result.extend (tiles_list)
-					Result.width:= tiles_list.count.max (Result.width)
+					level.extend (tiles_list)
+					level.width := tiles_list.count.max (level.width)
 					j := j + 1
 				end
 			end
-			Result.tile_width:= Result.at (1).at (1).image.width
-			Result.tile_height:= Result.at (1).at (1).image.height
+			level.tile_width := level.at (1).at (1).image.width
+			level.tile_height := level.at (1).at (1).image.height
+			level.initialize_player
 		end
-
 
 end

@@ -1,8 +1,7 @@
 note
-	description: "Summary description for {LEVEL}."
-	author: ""
-	date: "$Date$"
-	revision: "$Revision$"
+	description: "Level of the game"
+	author: "Alexandre Girardin"
+	date: "May 28"
 
 class
 	LEVEL
@@ -15,18 +14,35 @@ inherit
 			copy
 		end
 
+	CAN_QUIT
+		undefine
+			is_equal,
+			copy
+		end
+
 	ARRAYED_LIST [ARRAYED_LIST [TILE]]
 
 create
-	make
+	make, make_level
+
+feature {NONE}
+
+	make_level(a_qte: INTEGER)
+		-- Initialize level
+		do
+			initialize_event_controller
+			create background.make
+			make(a_qte)
+		end
+
 
 feature -- Access
 
-	player: PLAYER assign assign_player
+	background: BACKGROUND
 
-	start_x: INTEGER assign assign_start_x
+	start_x: INTEGER assign set_start_x
 
-	start_y: INTEGER assign assign_start_y
+	start_y: INTEGER assign set_start_y
 
 	end_x: INTEGER
 
@@ -41,39 +57,84 @@ feature -- Access
 			Result:= count
 		end
 
-	width: INTEGER assign assign_width
+	width: INTEGER assign set_width
 
-	tile_width: INTEGER assign assign_tile_width
+	tile_width: INTEGER assign set_tile_width
 
-	tile_height: INTEGER assign assign_tile_height
+	tile_height: INTEGER assign set_tile_height
 
 feature -- Routines
 
-	update
+	initialize_event_controller
+		-- Initialize event controller
 		do
-			delta_x := (player.position_x + (player.image.width // 2)) - controller.screen_surface.width // 2
-			delta_y := (player.position_y + (player.image.height // 2)) - controller.screen_surface.height // 2
+			controller.clear_event_controller
+			controller.event_controller.on_quit_signal.extend (agent on_quit)
+			controller.event_controller.on_iteration.extend (agent display)
+		end
+
+	initialize_player
+		-- Initialize local and online players
+		local
+			l_player: PLAYER
+			l_online_player: PLAYER
+		do
+			l_player := create {PLAYER}.make (start_x, start_y)
+			from
+
+			until
+				network.is_ready
+			loop
+
+			end
+			network.send ("p")
+			network.send (l_player.position_x.out + " " + l_player.position_y.out)
+			l_online_player := create {PLAYER}.make (network.last_x, network.last_y)
+			single.local_player:= l_player
+			single.online_player:= l_online_player
 		end
 
 	display
+		-- Display everthing in level
 		local
 			l_tiles_to_display: LIST[TILE]
 		do
-			l_tiles_to_display:= scan_surrounding_tiles (player.center_x, player.center_y, (controller.screen_surface.width // tile_width + 2), controller.screen_surface.height // tile_height + 2)
+			background.display_dynamic(0, 0)
+
+
+			delta_x := (single.local_player.position_x + (single.local_player.image.width // 2)) - controller.screen_surface.width // 2
+			delta_y := (single.local_player.position_y + (single.local_player.image.height // 2)) - controller.screen_surface.height // 2
+
+			l_tiles_to_display:= scan_surrounding_tiles (single.local_player.center_x, single.local_player.center_y, (controller.screen_surface.width // tile_width + 2), controller.screen_surface.height // tile_height + 2)
 
 			across
 				l_tiles_to_display as la_tiles_to_display
 			loop
 				controller.screen_surface.draw_surface (la_tiles_to_display.item.image, la_tiles_to_display.item.position_x - delta_x, la_tiles_to_display.item.position_y - delta_y)
 			end
+			display_player
+			display_player_online
+			controller.flip_screen
 		end
 
 	display_player
+		-- Display local player
 		do
-			controller.screen_surface.draw_surface (player.image, player.position_x - delta_x, player.position_y - delta_y)
+			single.local_player.surrounding_tiles:= scan_surrounding_tiles (single.local_player.center_x, single.local_player.center_y, 3, 3)
+			single.local_player.update_local_player
+			controller.screen_surface.draw_surface (single.local_player.animation_image, single.local_player.position_x - delta_x, single.local_player.position_y - delta_y)
 		end
 
+	display_player_online
+		-- Display online player
+		do
+			single.online_player.update_online_player
+			controller.screen_surface.draw_surface (single.online_player.animation_image, single.online_player.position_x - delta_x, single.online_player.position_y - delta_y)
+		end
+
+
 	scan_surrounding_tiles (a_x, a_y, a_number_per_row, a_number_per_column: INTEGER): ARRAYED_LIST [TILE]
+		-- Scan around given position and return a list of tile
 		local
 			l_row: INTEGER
 			l_column: INTEGER
@@ -107,32 +168,27 @@ feature -- Routines
 
 feature -- Assigner
 
-	assign_player (a_player: PLAYER)
-		do
-			player := a_player
-		end
-
-	assign_tile_width (a_tile_width: INTEGER)
+	set_tile_width (a_tile_width: INTEGER)
 		do
 			tile_width := a_tile_width
 		end
 
-	assign_tile_height (a_tile_height: INTEGER)
+	set_tile_height (a_tile_height: INTEGER)
 		do
 			tile_height := a_tile_height
 		end
 
-	assign_start_x (a_start_x: INTEGER)
+	set_start_x (a_start_x: INTEGER)
 		do
 			start_x := a_start_x
 		end
 
-	assign_start_y (a_start_y: INTEGER)
+	set_start_y (a_start_y: INTEGER)
 		do
 			start_y := a_start_y
 		end
 
-	assign_width(a_width: INTEGER)
+	set_width(a_width: INTEGER)
 		do
 			width:= a_width
 		end

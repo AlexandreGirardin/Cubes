@@ -1,28 +1,29 @@
 note
-	description: "Summary description for {DISPLAYABLE}."
-	author: ""
-	date: "$Date$"
-	revision: "$Revision$"
+	description: "Give objects position and image"
+	author: "Alexandre Girardin"
+	date: "May 28"
 
-class
+ class
 	DISPLAYABLE
 
 feature -- Access
 
 	image: GAME_SURFACE
 
-	position_x: INTEGER assign assign_position_x
+	position_x: INTEGER assign set_position_x
 
-	position_y: INTEGER assign assign_position_y
+	position_y: INTEGER assign set_position_y
 
-feature -- Routines
+feature -- Setters
 
-	assign_position_x (a_position_x: INTEGER)
+	set_position_x (a_position_x: INTEGER)
+		-- set x position of displayable objects
 		do
 			position_x := a_position_x
 		end
 
-	assign_position_y (a_position_y: INTEGER)
+	set_position_y (a_position_y: INTEGER)
+	-- set x position of displayable objects
 		do
 			position_y := a_position_y
 		end

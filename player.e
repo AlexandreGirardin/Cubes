@@ -1,20 +1,18 @@
 note
-	description: "Summary description for {CHARACTER}."
-	author: ""
-	date: "$Date$"
-	revision: "$Revision$"
+	description: "Player of the game"
+	author: "Alexandre Girardin"
+	date: "May 28"
 
 class
 	PLAYER
 
 inherit
 
+	ANIMATED
+
 	DISPLAYABLE
 
 	HARD_MOBILE
-		redefine
-			update
-		end
 
 	SHARED
 
@@ -23,76 +21,96 @@ create
 
 feature {NONE} -- Initialization
 
-	make (a_cell_position_x, a_cell_position_y: CELL [REAL])
+	make (a_position_x, a_position_y: INTEGER)
+		-- Initialize player
 		local
 		do
-			create {GAME_SURFACE_IMG_FILE} image.make_with_alpha (image_file)
 			create vector.make (0, 0, 0.51, 0.97, 1, 15)
-			cell_position_x := a_cell_position_x
-			cell_position_y := a_cell_position_y
-			position_x := cell_position_x.item.rounded
-			position_y := cell_position_y.item.rounded
-		end
-
-	image_file: STRING
-			-- The image file path.
-		do
-			Result := "Images/cube.png"
+			position_x := a_position_x
+			position_y := a_position_y
+			generate_animation ("Cubes/Blue/cube", 24)
 		end
 
 feature -- Access
 
-	level: LEVEL assign assign_level
+	surrounding_tiles: LIST [TILE] assign set_surrounding_tiles
 
-	cell_position_x: CELL [REAL] assign assign_cell_position_x
-
-	cell_position_y: CELL [REAL] assign assign_cell_position_y
-
-	friction_source: AUDIO_SOURCE
-		local
-			l_sound: AUDIO_SOUND_WAV_FILE
+	scream_source: AUDIO_SOURCE
 		once
 			audio_controller.add_source
 			Result := audio_controller.last_source
-			create l_sound.make ("Sounds/music.wav")
-			Result.queue_sound_infinite_loop (l_sound)
+			Result.queue_sound_loop (sound_factory.long_scream,1)
 		end
-
-	go_left: BOOLEAN assign assign_go_left
-
-	go_right: BOOLEAN assign assign_go_right
 
 feature -- Routines
 
-	update
+	update_local_player
+		-- Update local player
+		do
+			reset_collisions
+			update_Y
+			update_x
+			apply_gravity
+			read_keyboard
+			play_sound
+			network.send ("p")
+			network.send (position_x.out + " " + position_y.out)
+		end
+
+	update_online_player
+		-- Update online player
+		do
+			position_x:= network.last_x
+			position_y:= network.last_y
+		end
+
+	reset_collisions
+		-- Reset all the collision flags
 		do
 			collision_top := false
 			collision_bottom := false
 			collision_left := false
 			collision_right := false
-			cell_position_y.put (position_y + vector.norm_y)
-			position_y := cell_position_y.item.rounded
-			detect_collision (true)
-			cell_position_x.put (position_x + vector.norm_x)
-			position_x := cell_position_x.item.rounded
+		end
+
+	read_keyboard
+		-- Handle keyboard
+		do
+			if keyboard.left_key or keyboard.right_key then
+				if keyboard.left_key then
+					move_left
+				end
+				if keyboard.right_key then
+					move_right
+				end
+			else
+				slow_down
+			end
+
+			if keyboard.space_key then
+				jump
+			end
+		end
+
+	update_x
+		-- Update player position x
+		do
+			position_x := (position_x + vector.norm_x).ceiling
 			detect_collision (false)
-			apply_gravity
-				--			friction_source.set_gain (vector.norm_x.item.abs / vector.max_speed)
-				--			if vector.norm_x.item.abs > 0 and not friction_source.is_playing then
-				--				friction_source.play
-				--			else
-				--					--friction_source.pause
-				--			end
-				--			audio_controller.update
+		end
+
+	update_y
+		-- Update player position y
+		do
+			position_y:= (position_y + vector.norm_y).floor
+			detect_collision (true)
 		end
 
 	detect_collision (y: BOOLEAN)
-		local
-			l_surrounding_tiles: ARRAYED_LIST [TILE]
+		--Detect collision
 		do
-			l_surrounding_tiles := level.scan_surrounding_tiles (center_x, center_y, 3, 3)
 			across
-				l_surrounding_tiles as la_surrounding_tiles
+				surrounding_tiles as la_surrounding_tiles
 			loop
 				if attached {HARD_TILE} la_surrounding_tiles.item as la_tile then
 					if la_tile.check_collision (current) then
@@ -104,14 +122,23 @@ feature -- Routines
 					end
 				end
 			end
+			if single.online_player.check_collision (current) then
+				if y then
+							single.online_player.apply_collision_y (current)
+						else
+							single.online_player.apply_collision_x (current)
+						end
+			end
 		end
 
 	slow_down
+		-- Slow down the player
 		do
 			vector.norm_x := (vector.norm_x * vector.deceleration_x)
 		end
 
 	apply_gravity
+		-- Apply gravity to player
 		do
 			if collision_left or collision_right then
 				vector.norm_y := 5
@@ -121,6 +148,7 @@ feature -- Routines
 		end
 
 	move_left
+		-- Move the player to the left
 		do
 			vector.norm_x := (vector.norm_x - vector.acceleration_x)
 			if vector.norm_x <= - vector.max_speed then
@@ -129,6 +157,7 @@ feature -- Routines
 		end
 
 	move_right
+		-- Move the player to the right
 		do
 			vector.norm_x := (vector.norm_x + vector.acceleration_x)
 			if vector.norm_x >= vector.max_speed then
@@ -137,6 +166,7 @@ feature -- Routines
 		end
 
 	jump
+		-- Allow the player to jump
 		do
 			if collision_bottom then
 				vector.norm_y := -15
@@ -152,31 +182,27 @@ feature -- Routines
 			end
 		end
 
+	play_sound
+		-- Play player sound
+		do
+			if not collision_top and not collision_bottom and not collision_left and not collision_right then
+				if vector.norm_y > 25 then
+					scream_source.set_gain ((vector.norm_y/50).min(1))
+					if not scream_source.is_playing then
+						scream_source.play
+					end
+				end
+			else
+				scream_source.pause
+			end
+			audio_controller.update
+		end
+
 feature --Assigner
 
-	assign_level (a_level: LEVEL)
+	set_surrounding_tiles (a_surrounding_tiles: LIST [TILE])
 		do
-			level := a_level
-		end
-
-	assign_cell_position_x (a_cell_position_x: CELL [REAL])
-		do
-			cell_position_x := a_cell_position_x
-		end
-
-	assign_cell_position_y (a_cell_position_y: CELL [REAL])
-		do
-			cell_position_y := a_cell_position_y
-		end
-
-	assign_go_left (a_go_left: BOOLEAN)
-		do
-			go_left := a_go_left
-		end
-
-	assign_go_right (a_go_right: BOOLEAN)
-		do
-			go_right := a_go_right
+			surrounding_tiles := a_surrounding_tiles
 		end
 
 end

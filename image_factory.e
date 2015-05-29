@@ -1,8 +1,7 @@
 note
-	description: "Summary description for {IMAGE_FACTORY}."
-	author: ""
-	date: "$Date$"
-	revision: "$Revision$"
+	description: "Create Images"
+	author: "Alexandre Girardin"
+	date: "May 28"
 
 class
 	IMAGE_FACTORY
@@ -13,16 +12,32 @@ create
 feature {NONE}
 
 	make
+		-- Initialize image factory
 		do
 			number_of_instances.put (number_of_instances.item + 1)
 		end
 
 	number_of_instances: CELL[INTEGER]
+		-- Contain the number of instance
 		once
 			create Result.put(0)
 		end
 
-feature -- Routines
+feature -- Player
+
+	blue_cube_animation(a_path:STRING; a_image_number:INTEGER): GAME_SURFACE
+		do
+			create {GAME_SURFACE_IMG_FILE} Result.make_with_alpha ("Images/Animations/" + a_path + a_image_number.out + ".png")
+		end
+
+feature -- Background
+
+	background: GAME_SURFACE
+		once
+			create {GAME_SURFACE_IMG_FILE} Result.make_with_alpha ("Images/background.png")
+		end
+
+feature -- Level
 
 	space: GAME_SURFACE
 		once

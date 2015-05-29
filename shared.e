@@ -1,13 +1,22 @@
 note
-	description: "Summary description for {SHARED}."
-	author: ""
-	date: "$Date$"
-	revision: "$Revision$"
+	description: "Contain all shared class"
+	author: "Alexandre Girardin"
+	date: "May 28"
 
 class
 	SHARED
 
-feature
+feature -- Access
+
+	single: SINGLE
+		once
+			create Result.make
+		end
+
+	network: NETWORK
+		once
+			create Result.make_network
+		end
 
 	controller: GAME_LIB_CONTROLLER
 		once
@@ -37,7 +46,19 @@ feature
 			create Result.make
 		end
 
+	sound_factory: SOUND_FACTORY
+		once
+			create Result.make
+		end
+
 	tile_factory: TILE_FACTORY
+		once
+			create Result.make
+		end
+
+feature{PLAYER}
+
+	keyboard: KEYBOARD
 		once
 			create Result.make
 		end

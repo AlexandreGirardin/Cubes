@@ -1,5 +1,5 @@
 note
-	description: "Summary description for {TILE_FACTORY_DEUX_LA_REVANCHE_DE_L_AGNEAU}."
+	description: "Create multiple tile"
 	author: ""
 	date: "$Date$"
 	revision: "$Revision$"
@@ -17,6 +17,7 @@ create
 feature {NONE}
 
 	make
+		--Initialize tile factory
 		do
 			number_of_instances.put (number_of_instances.item + 1)
 			create converter.make(0)
@@ -34,6 +35,7 @@ feature {NONE}
 		end
 
 	number_of_instances: CELL [INTEGER]
+		-- Contain number of instance
 		once
 			create Result.put (0)
 		end
@@ -42,7 +44,7 @@ feature -- Access
 
 	converter:HASH_TABLE[FUNCTION [ANY, TUPLE, TILE], CHARACTER]
 
-feature -- Functions
+feature -- Routines
 
 	space(a_position_x, a_position_y:INTEGER): TILE
 		do

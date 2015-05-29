@@ -1,8 +1,7 @@
 note
-	description: "Summary description for {TILE}."
-	author: ""
-	date: "$Date$"
-	revision: "$Revision$"
+	description: "Tile of the game"
+	author: "Alexandre Girardin"
+	date: "May 28"
 
 class
 	TILE
@@ -14,6 +13,7 @@ create
 feature {NONE}
 
 	make_tile (a_image: GAME_SURFACE; a_position_x, a_position_y: INTEGER)
+		-- Initialize tile
 		do
 			image := a_image
 			position_x:= a_position_x
